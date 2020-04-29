@@ -2,7 +2,20 @@ require 'main/services/v1/user_services_pb'
 
 class UserService < Main::Services::V1::User::Service
   def get_user(request, call)
-    # TODO: implement
+    user = User.find(request.id)
+
+    user_as_protocol_buffer = Main::Resources::V1::User.new(
+        id: id,
+        name: name,
+        created_at: Google::Protobuf::Timestamp.new.tap {|t| t.from_time(created_at) },
+        updated_at: Google::Protobuf::Timestamp.new.tap {|t| t.from_time(updated_at) },
+        )
+
+    Main::Services::V1::GetUserResponse.new(
+        user: user.as_protocol_buffer
+    )
+    rescue ActiveRecord::RecordNotFound => e
+      raise GRPC::NotFound.new(e.message)
   end
 
   def list_users(request, call)
